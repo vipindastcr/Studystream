@@ -1,0 +1,21 @@
+Folder PATH listing
+Volume serial number is 50AA-F8BA
+C:.
+|   App.css
+|   App.tsx
+|   frontend-structure.txt
+|   index.css
+|   main.tsx
+|   vite-env.d.ts
+|   
++---app
+|       store.ts
+|       
++---assets
+|       react.svg
+|       
++---components
++---features
++---hooks
++---pages
+\---services
