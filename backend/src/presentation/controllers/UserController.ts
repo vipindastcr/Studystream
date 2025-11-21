@@ -1,41 +1,38 @@
-
-
-import {Request, Response} from "express"
-import { UserRepositoryImpl} from "@infrastructure/repositories/UserRepositoryImpl"
-import {RegisterUserUseCase} from "@application/use-cases/RegisterUserUseCase"
-
+import { Request, Response } from 'express';
+import { RegisterUserUseCase } from '../../application/use-cases/RegisterUserUseCase';
+import { UserRepositoryImpl } from '../../infrastructure/repositories/UserRepositoryImpl';
+// 1. Import the Password Service Implementation
+import { BcryptPasswordService } from '../../infrastructure/services/BcryptPasswordService';
 
 export class UserController {
+    // 2. Instantiate the Repository (The Ingredients)
     private userRepo = new UserRepositoryImpl();
-    private createUser = new RegisterUserUseCase( this.userRepo )
 
-    // register = async ( req: Request, res: Response) => {
-    //     try {
-    //             console.log('req.body : ---', req.body);
-    //          const user = await this.createUser.execute(req.body)
-    //          res.status(201).json(user)
-    //     } catch (error) {
-    //         res.status(500).json({message: "Internal server error"})
-    //     }
-    // }
+    // 3. Instantiate the Password Service (The Knife)
+    private passwordService = new BcryptPasswordService();
 
-    register = async (req: Request, res: Response) => {
-    try {
-        console.log("req.body:", req.body);
+    // 4. Update the Use Case to accept BOTH arguments
+    private registerUserUseCase = new RegisterUserUseCase(
+        this.userRepo,       // First arg: Repository
+        this.passwordService // Second arg: Password Service (This was missing!)
+    );
 
-        const user = await this.createUser.execute(req.body);
+    // ... your register method ...
+     register = async (req: Request, res: Response)=>{
+        try {
+            const result = await this.registerUserUseCase.execute(req.body);
+            // console.log('resul t : ', result );
+            res.status(201).json(result);
+        } catch (error) {
+            
+            // 1. Cast error to 'any' to access properties freely
+            const err = error as any;
 
-        return res.status(201).json(user);
-    } catch (error) {
-        if (error instanceof Error) {
-            console.error("ERROR:", error.message);
-            return res.status(500).json({ message: error.message });
+            console.error("🔴 Error in Controller:", err.message); 
+            
+            if (err.errors) console.error("Validation Details:", err.errors);
+            
+            res.status(400).json({ error: err.message });
         }
-        
-        console.error("Unknown ERROR:", error);
-        return res.status(500).json({ message: "Internal server error" });
     }
-};
-
-
 }

@@ -1,21 +1,23 @@
 Folder PATH listing
 Volume serial number is 50AA-F8BA
 C:.
-|   App.css
 |   App.tsx
-|   frontend-structure.txt
+|   folder_structure.txt
 |   index.css
 |   main.tsx
 |   vite-env.d.ts
 |   
 +---app
+|       rootReducer.ts
 |       store.ts
-|       
-+---assets
-|       react.svg
 |       
 +---components
 +---features
 +---hooks
 +---pages
+|       Register.tsx
+|       
 \---services
+        api.ts
+        authService.ts
+        
