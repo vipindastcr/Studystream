@@ -1,0 +1,44 @@
+Folder PATH listing
+Volume serial number is 50AA-F8BA
+C:.
+|   folder_structure.txt
+|   server.ts
+|   
++---application
+|   \---use-cases
+|           FindUserByEmail.ts
+|           RegisterUserUseCase.ts
+|           
++---domain
+|   +---entities
+|   |       User.ts
+|   |       
+|   +---repositories
+|   |       IUserRepository.ts
+|   |       
+|   \---services
+|           IPasswordService.ts
+|           
++---infrastructure
+|   +---config
+|   |       env.ts
+|   |       
+|   +---database
+|   |       connection.ts
+|   |       
+|   +---models
+|   |       UserModel.ts
+|   |       
+|   +---repositories
+|   |       UserRepositoryImpl.ts
+|   |       
+|   \---services
+|           BcryptPasswordService.ts
+|           
+\---presentation
+    +---controllers
+    |       UserController.ts
+    |       
+    \---routes
+            userRoutes.ts
+            
