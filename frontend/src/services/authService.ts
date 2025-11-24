@@ -10,6 +10,11 @@ export interface RegisterData {
   role: "user" | "tutor";
 }
 
+interface VerifyOtpPayload {
+  pendingId: string;
+  otp: string;
+}
+
 export const registerUser = async (data: RegisterData) => {
   const payload = {
     first_name: data.firstName,
@@ -21,5 +26,10 @@ export const registerUser = async (data: RegisterData) => {
   };
 
   const response = await api.post("/users/register", payload);
+  return response.data;
+};
+
+export const verifyOtp = async ({ pendingId, otp }: VerifyOtpPayload) => {
+  const response = await api.post("/users/verify-otp", { pendingId, otp });
   return response.data;
 };
