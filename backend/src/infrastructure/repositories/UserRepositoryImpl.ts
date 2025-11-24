@@ -18,7 +18,8 @@ export class UserRepositoryImpl implements IUserRepository {
       doc.role,
       doc.created_at,
       doc.last_login,
-      doc.isBlocked
+      doc.isBlocked,
+      doc.isEmailVerified ?? false
     );
   }
 
@@ -32,7 +33,8 @@ export class UserRepositoryImpl implements IUserRepository {
       role: user.role,
       created_at: user.created_at,
       last_login: user.last_login,
-      isBlocked: user.isBlocked
+      isBlocked: user.isBlocked,
+      isEmailVerified: user.isEmailVerified
     });
 
     return this.toEntity(created.toObject());
@@ -47,4 +49,18 @@ export class UserRepositoryImpl implements IUserRepository {
     const doc = await UserModel.findById(id).lean();
     return doc ? this.toEntity(doc) : null;
   }
+
+  async updateEmailVerification(
+    userId: string,
+    isVerified: boolean
+  ): Promise<User | null> {
+    const updated = await UserModel.findByIdAndUpdate(
+      userId,
+      { isEmailVerified: isVerified },
+      { new: true, lean: true }
+    );
+
+    return updated ? this.toEntity(updated) : null;
+  }
+
 }

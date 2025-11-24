@@ -1,38 +1,53 @@
 import { Request, Response } from 'express';
 import { RegisterUserUseCase } from '../../application/use-cases/RegisterUserUseCase';
+import { VerifyOtpUseCase } from '../../application/use-cases/VerifyOtpUseCase';
 import { UserRepositoryImpl } from '../../infrastructure/repositories/UserRepositoryImpl';
-// 1. Import the Password Service Implementation
+import { PendingUserRepositoryImpl } from '../../infrastructure/repositories/PendingUserRepositoryImpl';
 import { BcryptPasswordService } from '../../infrastructure/services/BcryptPasswordService';
+import { OtpServiceImpl } from '../../infrastructure/services/OtpServiceImpl';
 
 export class UserController {
-    // 2. Instantiate the Repository (The Ingredients)
     private userRepo = new UserRepositoryImpl();
-
-    // 3. Instantiate the Password Service (The Knife)
+    private pendingUserRepo = new PendingUserRepositoryImpl();
     private passwordService = new BcryptPasswordService();
+    private otpService = new OtpServiceImpl();
 
-    // 4. Update the Use Case to accept BOTH arguments
     private registerUserUseCase = new RegisterUserUseCase(
-        this.userRepo,       // First arg: Repository
-        this.passwordService // Second arg: Password Service (This was missing!)
+        this.userRepo,
+        this.pendingUserRepo,
+        this.passwordService,
+        this.otpService
+    );
+    private verifyOtpUseCase = new VerifyOtpUseCase(
+        this.userRepo,
+        this.pendingUserRepo,
+        this.otpService
     );
 
-    // ... your register method ...
-     register = async (req: Request, res: Response)=>{
+    register = async (req: Request, res: Response) => {
         try {
+            console.log('req------ -', req);
             const result = await this.registerUserUseCase.execute(req.body);
-            // console.log('resul t : ', result );
+            // console.log('the req: --', result);
             res.status(201).json(result);
         } catch (error) {
-            
-            // 1. Cast error to 'any' to access properties freely
             const err = error as any;
+            console.error("Error in Controller:", err.message);
 
-            console.error("🔴 Error in Controller:", err.message); 
-            
             if (err.errors) console.error("Validation Details:", err.errors);
-            
+
             res.status(400).json({ error: err.message });
         }
-    }
+    };
+
+    verifyOtp = async (req: Request, res: Response) => {
+        try {
+            const result = await this.verifyOtpUseCase.execute(req.body);
+            res.status(200).json(result);
+        } catch (error) {
+            const err = error as any;
+            console.error("Error verifying OTP:", err.message);
+            res.status(400).json({ error: err.message });
+        }
+    };
 }

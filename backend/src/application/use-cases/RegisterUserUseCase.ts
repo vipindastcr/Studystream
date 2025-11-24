@@ -1,35 +1,82 @@
-import { v4 as uuidv4 } from 'uuid'; // Tool to generate random IDs
-import { User, UserRole } from '../../domain/entities/User';
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { IPasswordService } from '../../domain/services/IPasswordService';
+import { v4 as uuidv4 } from "uuid";
+import { UserRole } from "../../domain/entities/User";
+import { PendingUser } from "../../domain/entities/PendingUser";
+import { IUserRepository } from "../../domain/repositories/IUserRepository";
+import { IPendingUserRepository } from "../../domain/repositories/IPendingUserRepository";
+import { IPasswordService } from "../../domain/services/IPasswordService";
+import { IOtpService } from "../../domain/services/IOtpService";
+import validator from "validator";
+
+interface RegisterUserDTO {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  password: string;
+  role?: UserRole | string;
+}
 
 export class RegisterUserUseCase {
   constructor(
     private userRepository: IUserRepository,
-    private passwordService: IPasswordService
+    private pendingUserRepository: IPendingUserRepository,
+    private passwordService: IPasswordService,
+    private otpService: IOtpService
   ) {}
 
-  async execute(userData: any) {
-    // 1. Hash the password first
-    const hashedPassword = await this.passwordService.hashPassword(userData.password);
-    // console.log('the hashed password -- @ appli/use-cases/RgstUrUscs ', hashedPassword );
+  async execute(userData: RegisterUserDTO) {
+    // Check duplicate email
+    const existing = await this.userRepository.findByEmail(userData.email);
+    if (existing) {
+      throw new Error("Email already exists");
+    }
 
-    // 2. Create the User Entity
-    // You must fill ALL fields defined in your User class constructor
-    const newUser = new User(
-      uuidv4(),              // id: We generate it here!
-      userData.first_name,   // first_name
-      userData.last_name,    // last_name
-      userData.email,        // email
-      userData.phone_number, // phone_number
-      hashedPassword,        // passwordHash (NOT plain text)
-      UserRole.USER,         // role: Default to USER
-      new Date(),            // created_at: Current time
-      new Date(),            // last_login: Current time (assuming auto-login)
-      false                  // isBlocked: Default to false
+    if (!validator.isEmail(userData.email)) {
+      throw new Error("Please provide a valid email address");
+    }
+
+    const existingPending = await this.pendingUserRepository.findByEmail(
+      userData.email
+    );
+    if (existingPending) {
+      await this.pendingUserRepository.deleteById(existingPending.id);
+    }
+
+    const hashedPassword = await this.passwordService.hashPassword(
+      userData.password
     );
 
-    // 3. Save to repository
-    return await this.userRepository.create(newUser);
+    const role =
+      userData.role && userData.role.toString().toLowerCase() === UserRole.TUTOR
+        ? UserRole.TUTOR
+        : UserRole.USER;
+
+    const otp = this.otpService.generateOtp();
+    const otpHash = await this.otpService.hashOtp(otp);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    const pendingUser = new PendingUser(
+      uuidv4(),
+      userData.first_name,
+      userData.last_name,
+      userData.email,
+      userData.phone_number,
+      hashedPassword,
+      role,
+      otpHash,
+      expiresAt,
+      new Date()
+    );
+
+    const savedPending = await this.pendingUserRepository.create(pendingUser);
+
+    await this.otpService.sendOtp(userData.email, otp);
+
+    return {
+      success: true,
+      message: "OTP sent to your email",
+      email: userData.email,
+      pendingId: savedPending.id
+    };
   }
 }

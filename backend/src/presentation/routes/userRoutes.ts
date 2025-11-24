@@ -8,6 +8,7 @@ const controller = new UserController();
 
 
 router.post("/register", controller.register);
+router.post("/verify-otp", controller.verifyOtp);
 
 
 export default router;

@@ -17,7 +17,8 @@ export class User {
     public role: UserRole,
     public created_at: Date,
     public last_login: Date,
-    public isBlocked: boolean
+    public isBlocked: boolean,
+    public isEmailVerified: boolean
   ) {}
 }
 
